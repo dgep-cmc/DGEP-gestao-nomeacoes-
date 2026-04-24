@@ -3,73 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Nomeações - Gabinete CMC</title>
+    <title>Gabinete CMC - Nomeações</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-    <!-- Dependências: HTML2PDF para geração do documento -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
-    
     <style>
-        :root { --cmc-blue: #004a8d; --cmc-red: #dc3545; --light-bg: #f4f7f6; }
+        :root { --cmc-blue: #004a8d; --light-bg: #f4f7f6; }
         body { background-color: var(--light-bg); font-family: 'Segoe UI', sans-serif; overflow: hidden; margin: 0; }
-        
-        /* LOGIN OVERLAY */
         #login-gate { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 10000; display: flex; align-items: center; justify-content: center; text-align: center; }
-        #loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 11000; align-items: center; justify-content: center; flex-direction: column; }
-
-        /* LAYOUT PRINCIPAL */
+        #loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 11000; align-items: center; justify-content: center; flex-direction: column; }
         .wrapper { display: flex; align-items: stretch; min-height: 100vh; }
-        #sidebar { min-width: 300px; max-width: 300px; background: white; border-right: 1px solid #ddd; display: flex; flex-direction: column; box-shadow: 2px 0 10px rgba(0,0,0,0.05); }
+        #sidebar { min-width: 300px; max-width: 300px; background: white; border-right: 1px solid #ddd; display: flex; flex-direction: column; }
         .sidebar-header { padding: 25px; border-bottom: 1px solid #eee; text-align: center; }
         #content { width: 100%; padding: 30px; overflow-y: auto; height: 100vh; background-image: linear-gradient(rgba(244, 247, 246, 0.97), rgba(244, 247, 246, 0.97)), url('brasao_cmc.png'); background-position: center; background-repeat: no-repeat; background-size: 500px; }
-        
-        /* BOTÕES NAVEGAÇÃO */
         .nav-btn { width: 100%; text-align: left; padding: 12px 18px; border: none; background: none; border-radius: 10px; margin-bottom: 8px; color: #444; font-weight: 500; display: flex; align-items: center; gap: 12px; transition: 0.2s; }
         .nav-btn:hover { background: #f0f4f8; color: var(--cmc-blue); }
-        .nav-btn.active { background: var(--cmc-blue); color: white; box-shadow: 0 4px 10px rgba(0, 74, 141, 0.2); }
-
-        /* CARDS */
+        .nav-btn.active { background: var(--cmc-blue); color: white; }
         .card-form { background: white; border-radius: 15px; padding: 35px; box-shadow: 0 10px 40px rgba(0,0,0,0.06); }
         .titulo-sessao { color: var(--cmc-blue); font-weight: 800; text-transform: uppercase; border-left: 8px solid var(--cmc-blue); padding-left: 15px; margin-bottom: 30px; }
-        .orcamento-box { padding: 18px; border-radius: 12px; font-weight: bold; margin-bottom: 25px; text-align: center; font-size: 1.1rem; }
-        
-        /* ======== ESTILO TÉCNICO DO PDF (OFICIAL) ======== */
-        .pdf-container { display: none; width: 210mm; background: white; color: #000; padding: 10mm 15mm; font-family: Arial, Helvetica, sans-serif; position: relative; }
-        .pdf-header-box { width: 100%; border: 1.5px solid #000; display: flex; align-items: center; margin-bottom: 8mm; }
-        .pdf-logo { width: 120px; padding: 10px; border-right: 1.5px solid #000; text-align: center; }
-        .pdf-titles { flex: 1; text-align: center; padding: 10px; text-transform: uppercase; font-weight: bold; }
-        .pdf-body { font-size: 11.5pt; line-height: 1.6; text-align: justify; }
-        .f1-text { text-indent: 50px; margin-bottom: 8mm; }
-        .pdf-table { width: 100%; border-collapse: collapse; border: 1.5px solid #000; margin-top: 5mm; }
-        .pdf-table td { border: 1px solid #000; padding: 10px; }
-        .pdf-label { background: #f2f2f2; font-weight: bold; width: 35%; text-transform: uppercase; font-size: 8.5pt; }
-        .pdf-footer { margin-top: auto; text-align: center; padding-top: 15mm; }
-        .pdf-line { border-top: 1.5px solid #000; width: 300px; margin: 0 auto 5px auto; }
-        .pdf-form-n { position: absolute; top: 10mm; right: 15mm; font-size: 9pt; font-weight: bold; }
+        .orcamento-box { padding: 18px; border-radius: 12px; font-weight: bold; margin-bottom: 25px; text-align: center; }
+        .pdf-container { display: none; width: 210mm; background: white; color: #000; padding: 15mm 20mm; font-family: Arial, sans-serif; }
     </style>
 </head>
 <body>
 
-<!-- OVERLAY DE PROCESSAMENTO -->
 <div id="loading-overlay">
     <div class="spinner-border text-primary mb-3"></div>
-    <div id="loading-text" class="fw-bold text-primary text-center px-4">Enviando indicação e gerando protocolo oficial...</div>
+    <div id="loading-text" class="fw-bold text-primary">Aguarde...</div>
 </div>
 
-<!-- GATE DE LOGIN -->
 <div id="login-gate">
     <div class="p-5 border rounded-4 shadow-lg bg-white" style="max-width: 450px;">
         <img src="brasao_cmc.png" width="120" class="mb-4">
         <h2 class="fw-bold">Sistema de Nomeações</h2>
-        <p class="text-muted mb-4">Portal de Indicações - Gabinetes CMC</p>
-        <div id="g_id_onload" data-client_id="1093227389780-3scrr45lmsdjgkr670ti1q1dolr4h5oq.apps.googleusercontent.com" data-callback="handleCredentialResponse"></div>
-        <div class="g_id_signin" data-type="standard" data-size="large"></div>
+        <p class="text-muted mb-4">Uso institucional CMC</p>
+        <div id="buttonDiv"></div>
     </div>
 </div>
 
 <div class="wrapper" id="app-body" style="display: none;">
-    <!-- SIDEBAR -->
     <nav id="sidebar">
         <div class="sidebar-header">
             <img src="brasao_cmc.png" height="60">
@@ -84,88 +57,95 @@
             <button class="nav-btn" onclick="showPane('pane-status', this); buscarProtocolos();"><i class="bi bi-list-check"></i> Meus Protocolos</button>
         </div>
         <div class="p-3 border-top bg-light mt-auto">
-            <div id="user-display" class="small text-truncate fw-bold text-muted mb-1"></div>
-            <a href="javascript:location.reload()" class="text-danger small text-decoration-none fw-bold">Sair do Sistema</a>
+            <div id="user-display" class="small text-truncate fw-bold text-muted"></div>
+            <a href="javascript:location.reload()" class="text-danger small text-decoration-none fw-bold">Sair</a>
         </div>
     </nav>
 
-    <!-- CONTENT -->
     <div id="content">
-        <!-- 1. ESTRUTURA -->
         <div id="pane-comp" class="pane">
             <div class="card-form">
-                <h4 class="titulo-sessao">Indicação de Estrutura de Gabinete (até 9 Vagas)</h4>
-                <div class="mb-4">
-                    <label class="fw-bold mb-2">Vereador(a) Solicitante</label>
-                    <select id="c_ver" class="form-select form-select-lg ver-list"></select>
-                </div>
-                <div id="orcamentoMsg" class="orcamento-box bg-success text-white shadow-sm border-0">Total: R$ 0,00 / Teto: R$ 92.998,45</div>
+                <h4 class="titulo-sessao">Indicação de Estrutura</h4>
+                <div class="mb-4"><label class="fw-bold">Vereador(a)</label><select id="c_ver" class="form-select ver-list"></select></div>
+                <div id="orcamentoMsg" class="orcamento-box bg-success text-white shadow-sm border-0">Total: R$ 0,00</div>
                 <div class="row g-3" id="gridComposicao"></div>
-                <div class="text-end mt-5">
-                    <button id="btnGerarComp" onclick="processarEnvio('comp')" class="btn btn-primary btn-lg px-5 py-3 shadow-sm fw-bold">PROTOCOLAR INDICAÇÃO</button>
-                </div>
+                <div class="text-end mt-5"><button id="btnGerarComp" onclick="processarEnvio('comp')" class="btn btn-primary btn-lg px-5 fw-bold shadow">PROTOCOLAR INDICAÇÃO</button></div>
             </div>
         </div>
 
-        <!-- 2. GABINETE INDIVIDUAL -->
         <div id="pane-ind" class="pane" style="display: none;">
             <div class="card-form">
                 <h4 class="titulo-sessao">Nomeação em Cargo de Gabinete</h4>
                 <div class="row g-4">
-                    <div class="col-md-6"><label class="fw-bold mb-1">Vereador(a)</label><select id="i_ver" class="form-select form-select-lg ver-list"></select></div>
-                    <div class="col-md-6"><label class="fw-bold mb-1">Pessoa Indicada</label><input type="text" id="i_nom" class="form-control form-control-lg" placeholder="Nome Completo"></div>
-                    <div class="col-md-4"><label class="fw-bold mb-1">Cargo/Símbolo</label><select id="i_sim" class="form-select form-select-lg"></select></div>
-                    <div class="col-md-4"><label class="fw-bold mb-1">Lotação</label><input type="text" id="i_lot" class="form-control form-control-lg" value="Gabinete Parlamentar"></div>
-                    <div class="col-md-4"><label class="fw-bold mb-1">Data de Nomeação</label><input type="date" id="i_dat" class="form-control form-control-lg date-lock"></div>
-                    <div class="col-12 text-end mt-4"><button onclick="processarEnvio('ind')" class="btn btn-primary btn-lg px-5 py-3 fw-bold">PROTOCOLAR INDICAÇÃO</button></div>
+                    <div class="col-md-6"><label class="fw-bold">Vereador(a)</label><select id="i_ver" class="form-select ver-list"></select></div>
+                    <div class="col-md-6"><label class="fw-bold">Pessoa Indicada</label><input type="text" id="i_nom" class="form-control form-control-lg"></div>
+                    <div class="col-md-4"><label class="fw-bold">Cargo/Símbolo</label><select id="i_sim" class="form-select form-select-lg"></select></div>
+                    <div class="col-md-4"><label class="fw-bold">Lotação</label><input type="text" id="i_lot" class="form-control form-control-lg" value="Gabinete Parlamentar"></div>
+                    <div class="col-md-4"><label class="fw-bold">Data Nomeação</label><input type="date" id="i_dat" class="form-control form-control-lg date-lock"></div>
+                    <div class="col-12 text-end"><button onclick="processarEnvio('ind')" class="btn btn-primary btn-lg px-5 fw-bold">PROTOCOLAR INDICAÇÃO</button></div>
                 </div>
             </div>
         </div>
 
-        <!-- 3. LIDERANÇA -->
         <div id="pane-lid" class="pane" style="display: none;">
             <div class="card-form">
                 <h4 class="titulo-sessao">Nomeação em Cargo de Liderança</h4>
                 <div class="row g-4">
-                    <div class="col-md-6"><label class="fw-bold mb-1">Vereador(a) Solicitante (Indica)</label><select id="l_ver" class="form-select form-select-lg ver-list"></select></div>
-                    <div class="col-md-6"><label class="fw-bold mb-1">Pessoa Indicada</label><input type="text" id="l_nom" class="form-control form-control-lg" placeholder="Nome Completo"></div>
-                    <div class="col-md-6"><label class="fw-bold mb-1">Lotação na Liderança de</label><input type="text" id="l_lid" class="form-control form-control-lg" placeholder="Ex: Bloco PT-PV"></div>
-                    <div class="col-md-6"><label class="fw-bold mb-1">Vereador Responsável (Frequência)</label><select id="l_resp" class="form-select form-select-lg ver-list"></select></div>
-                    <div class="col-md-12"><label class="fw-bold mb-1">Data de Nomeação</label><input type="date" id="l_dat" class="form-control form-control-lg date-lock"></div>
-                    <div class="col-12 text-end mt-4"><button onclick="processarEnvio('lid')" class="btn btn-primary btn-lg px-5 py-3 fw-bold">PROTOCOLAR INDICAÇÃO</button></div>
+                    <div class="col-md-6"><label class="fw-bold">Vereador Solicitante</label><select id="l_ver" class="form-select ver-list"></select></div>
+                    <div class="col-md-6"><label class="fw-bold">Pessoa Indicada</label><input type="text" id="l_nom" class="form-control form-control-lg"></div>
+                    <div class="col-md-6"><label class="fw-bold">Liderança de</label><input type="text" id="l_lid" class="form-control form-control-lg"></div>
+                    <div class="col-md-6"><label class="fw-bold">Vereador Responsável</label><select id="l_resp" class="form-select ver-list"></select></div>
+                    <div class="col-md-12"><label class="fw-bold">Data Nomeação</label><input type="date" id="l_dat" class="form-control form-control-lg date-lock"></div>
+                    <div class="col-12 text-end"><button onclick="processarEnvio('lid')" class="btn btn-primary btn-lg px-5 fw-bold">PROTOCOLAR INDICAÇÃO</button></div>
                 </div>
             </div>
         </div>
 
-        <!-- 4. STATUS -->
         <div id="pane-status" class="pane" style="display: none;">
-            <div class="card-form">
-                <h4 class="titulo-sessao">Acompanhamento de Protocolos (DGEP)</h4>
-                <div class="table-responsive"><table class="table align-middle table-hover mt-3"><thead class="table-light"><tr><th>ID</th><th>Indicado</th><th>Status</th><th>Parecer da Gestão</th></tr></thead><tbody id="lista-retorno"></tbody></table></div>
-            </div>
+            <div class="card-form"><h4>Status das Indicações</h4><table class="table align-middle mt-3"><thead class="table-light"><tr><th>ID</th><th>Indicado</th><th>Status</th><th>Retorno DGEP</th></tr></thead><tbody id="lista-retorno"></tbody></table></div>
         </div>
     </div>
 </div>
 
-<!-- ÁREA TÉCNICA DO PDF (OCULTA) -->
 <div id="pdfArea" class="pdf-container"><div id="pdfPage"></div></div>
 
 <script>
     const GAS_URL = "https://script.google.com/macros/s/AKfycbyHtQvVUKssbP2pZNAj7IVrVtPfn9t8uVNtzc_EmIdbtv7q4az8eCacDO1Akc6gm1TsWw/exec";
     const CARGOS = {"CC-1": 18599.66, "CC-2": 16533.01, "CC-3": 14466.48, "CC-4": 12399.85, "CC-5": 10333.14, "CC-6": 8266.53, "CC-7": 6199.89, "CC-8": 4133.19, "CC-9": 3099.98};
     const LIMITE = 92998.45;
-    const VEREADORES = ["Alexandre Leprevost", "Amália Tortato", "Angelo Vanhoni", "Beto Moraes", "Bruno Pessuti", "Dalton Borba", "Eder Borges", "Maria Leticia", "Marcelo Fachinello", "Tico Kuzma", "Rodrigo Reis", "Serginho do Posto", "Toninho da Farmácia", "Zezinho Sabará"].sort();
+    const VEREADORES = ["Alexandre Leprevost", "Amália Tortato", "Angelo Vanhoni", "Beto Moraes", "Bruno Pessuti", "Dalton Borba", "Eder Borges", "Edson do Parolin", "Ezequias Barros", "Giorgia Prates", "Hernani", "Indiara Barbosa", "João da 5 de Julho", "Jornalista Márcio Barros", "Lauri Rocha", "Leônidas Dias", "Marcos Vieira", "Maria Leticia", "Mauro Bobato", "Mauro Ignácio", "Noemia Rocha", "Nori Seto", "Oziel Mattos", "Marcelo Fachinello", "Osias Moraes", "Pastor Marciano Alves", "Pier Petruzziello", "Professor Euler", "Professora Josete", "Sargento Tânia Guerreiro", "Sidnei Toaldo", "Tico Kuzma", "Rodrigo Reis", "Serginho do Posto", "Toninho da Farmácia", "Zezinho Sabará"].sort();
 
-    // SEGURANÇA E LOGIN
-    function parseJwt(t) { var b = t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'); return JSON.parse(decodeURIComponent(window.atob(b).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''))); }
+    window.onload = function() {
+        google.accounts.id.initialize({
+            client_id: "1093227389780-3scrr45lmsdjgkr670ti1q1dolr4h5oq.apps.googleusercontent.com",
+            callback: handleCredentialResponse
+        });
+        google.accounts.id.renderButton(document.getElementById("buttonDiv"), { theme: "outline", size: "large", width: 350 });
 
-    async function handleCredentialResponse(r) {
-        const payload = parseJwt(r.credential);
-        const email = payload.email.toLowerCase().trim();
-        if(!email.endsWith("@cmc.pr.gov.br")) { alert("Uso restrito a e-mails institucionais CMC."); location.reload(); return; }
-        document.getElementById('login-gate').style.display = 'none';
-        document.getElementById('app-body').style.display = 'flex';
-        document.getElementById('user-display').innerHTML = `<i class="bi bi-person-circle"></i> ${email}`;
+        const ano = new Date().getFullYear();
+        document.querySelectorAll('.date-lock').forEach(i => { i.min=`${ano}-01-01`; i.max=`${ano}-12-31`; });
+        document.querySelectorAll('.ver-list').forEach(s => { s.add(new Option("-- Selecione o Vereador --", "")); VEREADORES.forEach(v => s.add(new Option(v,v))); });
+        const i_sim = document.getElementById('i_sim'); Object.keys(CARGOS).forEach(s => i_sim.add(new Option(`${s} - ${s==='CC-1'?'Chefe':'Assessor'}`, s)));
+        
+        const grid = document.getElementById('gridComposicao');
+        for(let i=1; i<=9; i++) {
+            let opt = i === 1 ? '' : '<option value="">-- Vazia --</option>';
+            Object.keys(CARGOS).forEach(s => { if((i==1 && s=="CC-1") || (i>1 && s!="CC-1")) opt += `<option value="${s}">${s} - R$ ${CARGOS[s].toLocaleString('pt-BR')}</option>`; });
+            grid.innerHTML += `<div class="col-md-4"><label class="small fw-bold">Vaga ${i}</label><select id="v-${i}" class="form-select sel-c" onchange="seq(${i})" ${i==1?'disabled':(i==2?'':'disabled')}>${opt}</select></div>`;
+            if(i===1) document.getElementById('v-1').value = "CC-1";
+        }
+        valOrc();
+    };
+
+    function handleCredentialResponse(r) {
+        try {
+            const b = r.credential.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+            const p = JSON.parse(decodeURIComponent(atob(b).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')));
+            if(!p.email.endsWith("@cmc.pr.gov.br")) { alert("Uso exclusivo @cmc.pr.gov.br"); location.reload(); return; }
+            document.getElementById('login-gate').style.display = 'none';
+            document.getElementById('app-body').style.display = 'flex';
+            document.getElementById('user-display').innerHTML = `<i class="bi bi-person-circle"></i> ${p.email.toLowerCase()}`;
+        } catch(e) { alert("Falha ao validar login."); }
     }
 
     function showPane(id, btn) {
@@ -175,97 +155,43 @@
         btn.classList.add('active');
     }
 
-    // REGRAS DE NEGÓCIO E INTERFACE
-    window.onload = () => {
-        const ano = new Date().getFullYear();
-        document.querySelectorAll('.date-lock').forEach(i => { i.min=`${ano}-01-01`; i.max=`${ano}-12-31`; });
-        document.querySelectorAll('.ver-list').forEach(s => { s.add(new Option("-- Selecione o Vereador --", "")); VEREADORES.forEach(v => s.add(new Option(v,v))); });
-        const i_sim = document.getElementById('i_sim'); Object.keys(CARGOS).forEach(s => i_sim.add(new Option(`${s} - ${s==='CC-1'?'Chefe':'Assessor'}`, s)));
-        
-        const grid = document.getElementById('gridComposicao');
-        for(let i=1; i<=9; i++) {
-            let opt = i === 1 ? '' : '<option value="">-- Vaga Vazia --</option>';
-            Object.keys(CARGOS).forEach(s => { if((i==1 && s=="CC-1") || (i>1 && s!="CC-1")) opt += `<option value="${s}">${s} - R$ ${CARGOS[s].toLocaleString('pt-BR')}</option>`; });
-            grid.innerHTML += `<div class="col-md-4"><label class="small fw-bold">Vaga ${i}</label><select id="v-${i}" class="form-select sel-c" onchange="seq(${i})" ${i==1?'disabled':(i==2?'':'disabled')}>${opt}</select></div>`;
-            if(i===1) document.getElementById('v-1').value = "CC-1";
-        }
-        valOrc();
-    };
-
     function seq(v) { if (v<9) { const prox = document.getElementById(`v-${v+1}`); if (document.getElementById(`v-${v}`).value) prox.disabled = false; else { for (let i = v+1; i <= 9; i++) { const c=document.getElementById(`v-${i}`); c.value=""; c.disabled=true; } } } valOrc(); }
-    
     function valOrc() {
         let t = 0; document.querySelectorAll('.sel-c').forEach(s => { if(s.value) t += CARGOS[s.value]; });
         const box = document.getElementById('orcamentoMsg'); 
-        box.innerText = `Total Gabinete: R$ ${t.toLocaleString('pt-BR')} / Teto: R$ 92.998,45`;
-        box.className = "orcamento-box text-white shadow-sm " + (t > LIMITE ? "bg-danger" : "bg-success");
+        box.innerText = `Total: R$ ${t.toLocaleString('pt-BR')} / Limite: R$ 92.998,45`;
+        box.className = "orcamento-box text-white " + (t > LIMITE ? "bg-danger" : "bg-success");
         document.getElementById('btnGerarComp').disabled = (t > LIMITE);
     }
 
-    // AUXILIAR PDF OFICIAL
-    function genPDFBase(titulo, subtitulo, corpo, dados, assinaturas) {
-        let rowsHtml = dados.map(d => `<tr><td class="pdf-label">${d.l}</td><td>${d.v}</td></tr>`).join('');
-        return `
-            <div class="pdf-form-n">Formulário CMC</div>
-            <div class="pdf-header-box">
-                <div class="pdf-logo"><img src="brasao_cmc.png" width="90"></div>
-                <div class="pdf-titles"><span style="font-size:16pt">${titulo}</span><br><span style="font-size:10pt">${subtitulo}</span></div>
-            </div>
-            <div class="pdf-body">
-                <p><b>EXCELENTÍSSIMO SENHOR PRESIDENTE DA COMISSÃO EXECUTIVA</b></p>
-                <p class="f1-text">${corpo}</p>
-                <table class="pdf-table">${rowsHtml}</table>
-                <p style="text-align:right; margin-top:10mm">Curitiba, ${new Date().toLocaleDateString('pt-BR', {day:'numeric', month:'long', year:'numeric'})}.</p>
-            </div>
-            <div class="pdf-footer">${assinaturas}</div>`;
-    }
-
-    // PROCESSAMENTO E ANEXAÇÃODrive
     async function processarEnvio(tipo) {
-        const ver = (tipo==='comp') ? document.getElementById('c_ver').value : (tipo==='ind' ? document.getElementById('i_ver').value : document.getElementById('l_ver').value);
+        const ver = (tipo==='comp')? document.getElementById('c_ver').value : (tipo==='ind'? document.getElementById('i_ver').value : document.getElementById('l_ver').value);
         if(!ver) return alert("Selecione o Vereador!");
         
-        document.getElementById('loading-overlay').style.display='flex';
+        document.getElementById('loading-overlay').style.display = 'flex';
+        let d = { action: "gravar", tipo: tipo, solicitante: ver, nomeado: (tipo==='comp'?'Estrutura':document.getElementById(tipo==='ind'?'i_nom':'l_nom').value), lotacao: (tipo==='ind'?'Gabinete':(tipo==='lid'?document.getElementById('l_lid').value:'')), simbolo: (tipo==='ind'?document.getElementById('i_sim').value:'CC-8'), responsavel: (tipo==='lid'?document.getElementById('l_resp').value:''), pdfBase64: "" };
 
-        let d = { action: "gravar", tipo: tipo, solicitante: ver, nomeado: "", cargo: "", simbolo: "", lotacao: "", responsavel: "", pdfBase64: "" };
-        let h = ""; 
-
-        if(tipo==='comp') {
-            d.nomeado = "Revisão Estrutural"; let r = ""; document.querySelectorAll('.sel-c').forEach((s, i) => { if(s.value) r += `Vaga ${i+1}: ${s.value} | `; });
-            h = genPDFBase("Indicação de Estrutura", "Composição de Gabinete", `O (A) Vereador(a) <b>${ver.toUpperCase()}</b> solicita a seguinte composição:`, [{l:"Vereador", v:ver}, {l:"Equipe", v:r}], `<div class="pdf-line"></div><b>Assinatura do(a) Vereador(a)</b>`);
-        } else if(tipo==='ind') {
-            d.nomeado = document.getElementById('i_nom').value; d.simbolo = document.getElementById('i_sim').value; d.lotacao = "Gabinete"; d.cargo = "Assessor";
-            h = genPDFBase("Indicação de Nomeação", "Estrutura de Apoio Parlamentar", `O (A) Vereador(a) <b>${ver.toUpperCase()}</b> indica a pessoa identificada abaixo:`, [{l:"Nome", v:d.nomeado.toUpperCase()}, {l:"Lotação", v:"Gabinete Parlamentar"}, {l:"Símbolo", v:d.simbolo}, {l:"Data Nomeação", v:document.getElementById('i_dat').value.split('-').reverse().join('/')}], `<div class="pdf-line"></div><b>Assinatura do(a) Vereador(a)</b>`);
-        } else {
-            d.nomeado = document.getElementById('l_nom').value; d.lotacao = document.getElementById('l_lid').value; d.responsavel = document.getElementById('l_resp').value; d.simbolo = "CC-8";
-            const ass = `<div style="display:flex; justify-content:space-around; margin-top:5mm"><div style="flex:1"><div class="pdf-line" style="width:230px"></div>${ver.toUpperCase()}<br>Solicitante</div><div style="flex:1"><div class="pdf-line" style="width:230px"></div>${d.responsavel.toUpperCase()}<br>Resp. Frequência</div></div>`;
-            h = genPDFBase("Nomeação Liderança", "Cargo de Apoio Político", `O (A) Vereador(a) <b>${ver.toUpperCase()}</b> solicita a nomeação abaixo:`, [{l:"Nome", v:d.nomeado.toUpperCase()}, {l:"Lotação", v:d.lotacao.toUpperCase()}, {l:"Símbolo", v:"CC-8"}], ass);
-        }
-
-        document.getElementById('pdfPage').innerHTML = h;
-        const opt = { margin:0, filename: "IND_"+ver+".pdf", image:{type:'jpeg', quality:1}, html2canvas:{scale:2, useCORS:true}, jsPDF:{unit:'mm', format:'a4', orientation:'portrait'} };
-
-        // CONVERTE PARA BASE64 E ENVIA
-        html2pdf().set(opt).from(document.getElementById('pdfPage')).outputPdf().then(pdfBinary => {
+        html2pdf().from(document.getElementById('content')).outputPdf().then(pdfBinary => {
             d.pdfBase64 = btoa(pdfBinary);
             fetch(GAS_URL, { method: "POST", body: JSON.stringify(d) }).then(res => res.json()).then(r => {
-                // Também salva uma cópia local para o gabinete
-                html2pdf().set(opt).from(document.getElementById('pdfPage')).save();
-                alert("Protocolado com sucesso e enviado à DGEP!\nID: " + r.protocol);
+                alert("Protocolado com sucesso! ID: " + r.protocol);
                 location.reload();
+            }).catch(() => {
+                alert("Erro ao enviar. Tente novamente.");
+                document.getElementById('loading-overlay').style.display = 'none';
             });
         });
     }
 
     async function buscarProtocolos() {
-        const b = document.getElementById('lista-retorno'); b.innerHTML = "Processando...";
+        const b = document.getElementById('lista-retorno'); b.innerHTML = "<tr><td colspan='4' class='text-center p-3'>Buscando...</td></tr>";
         fetch(GAS_URL).then(res => res.json()).then(data => {
             b.innerHTML = "";
             data.forEach(r => {
-                const color = r[8]==="Aprovado"?"success":(r[8]==="Recusado"?"danger":"warning text-dark");
-                b.innerHTML += `<tr><td><small>${r[0]}</small></td><td>${r[3]}</td><td><span class="badge bg-${color}">${r[8]}</span></td><td class="small text-muted">${r[9]||'---'}</td></tr>`;
+                const badge = r[8]==="Aprovado"?"success":(r[8]==="Recusado"?"danger":"warning text-dark");
+                b.innerHTML += `<tr><td><small>${r[0]}</small></td><td>${r[3]}</td><td><span class="badge bg-${badge}">${r[8]}</span></td><td class="small text-muted">${r[9]||'---'}</td></tr>`;
             });
-        });
+        }).catch(() => b.innerHTML = "Erro ao carregar.");
     }
 </script>
 </body>
