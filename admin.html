@@ -2,48 +2,42 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Processamento DGEP - Diretoria de Gestão de Pessoas</title>
+    <title>Painel Administrativo - DGEP CMC</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
-        :root { --cmc-red: #dc3545; }
-        body { background-color: #fff5f5; font-family: 'Segoe UI', sans-serif; }
+        body { background-color: #f4f7f6; font-family: 'Segoe UI', sans-serif; }
         #login-gate { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 10000; display: flex; align-items: center; justify-content: center; text-align: center; }
-        .admin-card { max-width: 1100px; margin: 40px auto; background: white; padding: 35px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-top: 5px solid var(--cmc-red); }
-        .table thead { background-color: #343a40; color: white; }
+        .admin-card { max-width: 1200px; margin: 40px auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-top: 5px solid #dc3545; }
     </style>
 </head>
 <body>
 
 <div id="login-gate">
-    <div class="p-5 border rounded-4 shadow-sm">
-        <img src="brasao_cmc.png" width="120" class="mb-4">
-        <h3 class="fw-bold">Gestão de Nomeações</h3>
-        <h5 class="text-danger mb-4">Diretoria de Gestão de Pessoas</h5>
-        <p class="text-muted small">Autenticação obrigatória para administradores</p>
-        <div id="g_id_onload" data-client_id="1093227389780-3scrr45lmsdjgkr670ti1q1dolr4h5oq.apps.googleusercontent.com" data-callback="handleAdminLogin"></div>
-        <div class="g_id_signin" data-type="standard"></div>
+    <div class="p-5 border rounded-4 bg-white shadow-sm" style="max-width: 400px;">
+        <img src="brasao_cmc.png" width="100" class="mb-4">
+        <h4 class="fw-bold">DGEP - Gestão de Pessoas</h4>
+        <p class="text-muted small mb-4">Área Restrita para Administradores</p>
+        <div id="buttonDiv"></div>
     </div>
 </div>
 
 <div class="container" id="admin-app" style="display:none;">
     <div class="admin-card">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h3 class="text-danger fw-bold text-uppercase"><i class="bi bi-shield-check"></i> Processamento DGEP</h3>
+            <h3 class="text-danger fw-bold"><i class="bi bi-shield-lock"></i> Processamento de Nomeações</h3>
             <div class="text-end">
-                <span id="adm-user" class="badge bg-danger mb-2 d-block"></span>
-                <button class="btn btn-outline-secondary btn-sm" onclick="buscarDados()"><i class="bi bi-arrow-clockwise"></i> Atualizar Lista</button>
+                <span id="user-tag" class="badge bg-dark mb-1 d-block"></span>
+                <button class="btn btn-outline-secondary btn-sm" onclick="buscarDados()">Atualizar Lista</button>
             </div>
         </div>
         <div class="table-responsive">
             <table class="table table-hover align-middle">
-                <thead>
+                <thead class="table-dark">
                     <tr><th>Protocolo</th><th>Vereador</th><th>Nomeado</th><th>Status</th><th>Ações</th></tr>
                 </thead>
-                <tbody id="lista-admin">
-                    <tr><td colspan="5" class="text-center p-5">Consultando banco de dados...</td></tr>
-                </tbody>
+                <tbody id="lista-admin"></tbody>
             </table>
         </div>
     </div>
@@ -52,85 +46,67 @@
 <script>
     const GAS_URL = "https://script.google.com/macros/s/AKfycbyHtQvVUKssbP2pZNAj7IVrVtPfn9t8uVNtzc_EmIdbtv7q4az8eCacDO1Akc6gm1TsWw/exec";
 
-    function parseJwt(token) {
-        var base64Url = token.split('.')[1];
-        var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        var jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
-            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-        }).join(''));
-        return JSON.parse(jsonPayload);
+    window.onload = function () {
+        google.accounts.id.initialize({
+            client_id: "1093227389780-3scrr45lmsdjgkr670ti1q1dolr4h5oq.apps.googleusercontent.com",
+            callback: handleAdminLogin
+        });
+        google.accounts.id.renderButton(document.getElementById("buttonDiv"), { size: "large", width: 300 });
     }
 
     async function handleAdminLogin(r) {
-        try {
-            const payload = parseJwt(r.credential);
-            const email = payload.email.toLowerCase().trim();
+        // Decodificação robusta
+        const payload = JSON.parse(atob(r.credential.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+        const emailLogado = payload.email.toLowerCase().trim();
 
-            // Chamada direta para o Apps Script
+        try {
             const resp = await fetch(GAS_URL + "?path=getAdmins");
-            if (!resp.ok) throw new Error("Erro na rede.");
-            
             const admins = await resp.json();
 
-            if (admins.includes(email)) {
+            // O pulo do gato: logar no console para você conferir se houver erro
+            console.log("E-mail Logado:", emailLogado);
+            console.log("Lista de Admins na Planilha:", admins);
+
+            if (admins.includes(emailLogado)) {
                 document.getElementById('login-gate').style.display = 'none';
                 document.getElementById('admin-app').style.display = 'block';
-                document.getElementById('adm-user').innerText = "Admin: " + email;
+                document.getElementById('user-tag').innerText = emailLogado;
                 buscarDados();
             } else {
-                alert("ACESSO NEGADO: " + email + " não é um administrador cadastrado.");
-                location.reload();
+                alert("ACESSO NEGADO\nO e-mail " + emailLogado + " não está na lista de administradores da planilha DGEP.");
             }
         } catch (e) {
-            alert("ERRO DE CONEXÃO: Não foi possível carregar a lista de administradores.");
-            console.error(e);
+            alert("Erro de conexão com o banco de dados.");
         }
     }
 
     async function buscarDados() {
         const b = document.getElementById('lista-admin');
-        b.innerHTML = "<tr><td colspan='5' class='text-center p-4'>Buscando dados da planilha...</td></tr>";
-        
-        try {
-            const res = await fetch(GAS_URL);
-            const data = await res.json();
+        b.innerHTML = "<tr><td colspan='5' class='text-center p-5'>Carregando...</td></tr>";
+        fetch(GAS_URL).then(res => res.json()).then(data => {
             b.innerHTML = "";
-            
-            if(data.length === 0) {
-                b.innerHTML = "<tr><td colspan='5' class='text-center p-4'>Nenhuma indicação encontrada.</td></tr>";
-                return;
-            }
-
             data.forEach(r => {
-                const sColor = r[8] === "Aprovado" ? "success" : (r[8] === "Recusado" ? "danger" : "warning text-dark");
+                const sBadge = r[8] === "Aprovado" ? "bg-success" : (r[8] === "Recusado" ? "bg-danger" : "bg-warning text-dark");
                 b.innerHTML += `<tr>
                     <td><small class="fw-bold">${r[0]}</small></td>
                     <td>${r[2]}</td>
                     <td><b>${r[3]}</b></td>
-                    <td><span class="badge bg-${sColor}">${r[8]}</span></td>
+                    <td><span class="badge ${sBadge}">${r[8]}</span></td>
                     <td>
                         <button class="btn btn-sm btn-success" onclick="mudarStatus('${r[0]}','Aprovado')">Aprovar</button>
                         <button class="btn btn-sm btn-danger" onclick="mudarStatus('${r[0]}','Recusado')">Negar</button>
                     </td>
                 </tr>`;
             });
-        } catch (e) {
-            b.innerHTML = "<tr><td colspan='5' class='text-center text-danger p-4'>Erro ao carregar indicações.</td></tr>";
-        }
+        });
     }
 
     async function mudarStatus(id, st) {
         const obs = prompt("Parecer da Diretoria de Gestão de Pessoas:");
-        if (obs === null) return;
-
-        try {
-            await fetch(GAS_URL, {
-                method: "POST",
-                body: JSON.stringify({ action: "atualizar", protocolo: id, novoStatus: st, obs: obs })
-            });
-            alert("Protocolo " + id + " atualizado.");
+        if (obs !== null) {
+            await fetch(GAS_URL, { method: "POST", body: JSON.stringify({ action: "atualizar", protocolo: id, novoStatus: st, obs: obs }) });
             buscarDados();
-        } catch (e) { alert("Falha ao salvar."); }
+        }
     }
 </script>
 </body>
