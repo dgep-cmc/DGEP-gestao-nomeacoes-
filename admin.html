@@ -2,45 +2,34 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>RH CMC - Processamento</title>
+    <title>Painel Administrativo - DGEP CMC</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
-        body { background-color: #f8f9fa; font-family: 'Segoe UI', sans-serif; background-image: linear-gradient(rgba(248,249,250,0.96), rgba(248,249,250,0.96)), url('brasao_cmc.png'); background-position: center; background-repeat: no-repeat; background-size: 500px; }
-        .navbar-admin { background: white; border-bottom: 4px solid #dc3545; padding: 15px; }
-        .admin-card { max-width: 1200px; margin: 30px auto; background: white; padding: 35px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-        #login-gate { position: fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:9999; display:flex; align-items:center; justify-content:center; }
+        body { background-color: #f4f7f6; font-family: 'Segoe UI', sans-serif; background-image: linear-gradient(rgba(244,247,246,0.97), rgba(244,247,246,0.97)), url('brasao_cmc.png'); background-position: center; background-repeat: no-repeat; background-size: 500px; }
+        #login-gate { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 10000; display: flex; align-items: center; justify-content: center; text-align: center; }
+        .admin-card { max-width: 1200px; margin: 40px auto; background: white; padding: 35px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-top: 5px solid #dc3545; }
     </style>
 </head>
 <body>
 
 <div id="login-gate">
-    <div class="text-center p-5 shadow-lg border rounded bg-white" style="max-width:400px">
+    <div class="p-5 border rounded bg-white shadow">
         <img src="brasao_cmc.png" width="100" class="mb-4">
-        <h4>Painel de Gestão DGEP</h4>
-        <p class="text-muted mb-4">Autenticação de Administrador</p>
+        <h4>Diretoria de Gestão de Pessoas (DGEP)</h4>
+        <p class="text-muted small mb-4">Área Restrita - Autenticação Obrigatória</p>
         <div id="buttonDiv"></div>
     </div>
 </div>
 
-<nav class="navbar-admin" id="nav-app" style="display:none">
-    <div class="container-fluid d-flex justify-content-between align-items-center">
-        <div class="d-flex align-items-center"><img src="brasao_cmc.png" height="40" class="me-3"><h5 class="mb-0 fw-bold">PROCESSO DE NOMEAÇÃO DGEP</h5></div>
-        <div id="adm-user" class="badge bg-danger p-2"></div>
-    </div>
-</nav>
-
-<div class="container" id="admin-app" style="display:none">
+<div class="container" id="admin-app" style="display:none;">
     <div class="admin-card">
-        <div class="d-flex justify-content-between mb-4 border-bottom pb-2">
-            <h4 class="text-secondary fw-bold text-uppercase">Solicitações Recebidas</h4>
-            <button class="btn btn-primary btn-sm" onclick="buscarDados()">Atualizar Lista</button>
+        <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+            <div class="d-flex align-items-center"><img src="brasao_cmc.png" height="40" class="me-3"><h4 class="text-danger fw-bold mb-0 text-uppercase">Processamento de Nomeações</h4></div>
+            <button class="btn btn-outline-secondary btn-sm" onclick="buscarDados()"><i class="bi bi-arrow-clockwise"></i> Atualizar</button>
         </div>
-        <div class="table-responsive"><table class="table table-hover align-middle">
-            <thead class="table-dark"><tr><th>Protocolo</th><th>Vereador</th><th>Nomeado</th><th>Status</th><th>Ações</th></tr></thead>
-            <tbody id="lista-admin"></tbody>
-        </table></div>
+        <div class="table-responsive"><table class="table table-hover align-middle"><thead class="table-dark"><tr><th>Protocolo</th><th>Vereador</th><th>Nomeado</th><th>Status</th><th class="text-center">Ação</th></tr></thead><tbody id="lista-admin"></tbody></table></div>
     </div>
 </div>
 
@@ -48,56 +37,37 @@
     const GAS_URL = "https://script.google.com/macros/s/AKfycbyHtQvVUKssbP2pZNAj7IVrVtPfn9t8uVNtzc_EmIdbtv7q4az8eCacDO1Akc6gm1TsWw/exec";
 
     window.onload = function () {
-        google.accounts.id.initialize({
-            client_id: "1093227389780-3scrr45lmsdjgkr670ti1q1dolr4h5oq.apps.googleusercontent.com",
-            callback: handleAdminLogin
-        });
-        google.accounts.id.renderButton(document.getElementById("buttonDiv"), { size: "large", width: 300 });
+        google.accounts.id.initialize({ client_id: "1093227389780-3scrr45lmsdjgkr670ti1q1dolr4h5oq.apps.googleusercontent.com", callback: handleAdminLogin });
+        google.accounts.id.renderButton(document.getElementById("buttonDiv"), { theme: "filled_blue", size: "large", width: 300 });
     }
 
     async function handleAdminLogin(r) {
-        try {
-            const b = r.credential.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
-            const p = JSON.parse(decodeURIComponent(atob(b).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')));
-            const email = p.email.toLowerCase().trim();
+        const payload = JSON.parse(atob(r.credential.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+        const email = payload.email.toLowerCase().trim();
+        const resp = await fetch(GAS_URL + "?path=getAdmins");
+        const admins = await resp.json();
 
-            const resp = await fetch(GAS_URL + "?path=getAdmins");
-            const admins = await resp.json();
-
-            if (admins.includes(email)) {
-                document.getElementById('login-gate').style.display = 'none';
-                document.getElementById('nav-app').style.display = 'block';
-                document.getElementById('admin-app').style.display = 'block';
-                document.getElementById('adm-user').innerText = email;
-                buscarDados();
-            } else {
-                alert("ACESSO NEGADO: " + email + " não está na lista de admins.");
-                location.reload();
-            }
-        } catch (e) { alert("ERRO: " + e.message); }
+        if (admins.includes(email)) {
+            document.getElementById('login-gate').style.display = 'none';
+            document.getElementById('admin-app').style.display = 'block';
+            buscarDados();
+        } else { alert("ACESSO NEGADO: " + email + " não autorizado."); location.reload(); }
     }
 
     async function buscarDados() {
-        const b = document.getElementById('lista-admin'); b.innerHTML = "Buscando...";
+        const b = document.getElementById('lista-admin'); b.innerHTML = "<tr><td colspan='5' class='text-center p-5'>Consultando banco de dados...</td></tr>";
         fetch(GAS_URL).then(res => res.json()).then(data => {
             b.innerHTML = "";
             data.forEach(r => {
-                const sc = r[8] === "Aprovado" ? "success" : (r[8] === "Recusado" ? "danger" : "warning text-dark");
-                b.innerHTML += `<tr>
-                    <td><code>${r[0]}</code></td><td>${r[2]}</td><td><b>${r[3]}</b></td>
-                    <td><span class="badge bg-${sc}">${r[8]}</span></td>
-                    <td><button class="btn btn-sm btn-success" onclick="atStatus('${r[0]}','Aprovado')">Sim</button> <button class="btn btn-sm btn-danger ms-1" onclick="atStatus('${r[0]}','Recusado')">Não</button></td>
-                </tr>`;
+                const sColor = r[8] === "Aprovado" ? "success" : (r[8] === "Recusado" ? "danger" : "warning text-dark");
+                b.innerHTML += `<tr><td><small class="fw-bold">${r[0]}</small></td><td>${r[2]}</td><td><b>${r[3]}</b></td><td><span class="badge bg-${sColor}">${r[8]}</span></td><td class="text-center"><button class="btn btn-success btn-sm me-1" onclick="atStatus('${r[0]}','Aprovado')">Aprovar</button><button class="btn btn-danger btn-sm" onclick="atStatus('${r[0]}','Recusado')">Negar</button></td></tr>`;
             });
         });
     }
 
     async function atStatus(id, st) {
-        const obs = prompt("Motivo/Retorno:");
-        if (obs !== null) {
-            await fetch(GAS_URL, { method: "POST", body: JSON.stringify({ action: "atualizar", protocolo: id, novoStatus: st, obs: obs }) });
-            buscarDados();
-        }
+        const obs = prompt("Parecer da Diretoria de Gestão de Pessoas:");
+        if (obs !== null) { await fetch(GAS_URL, { method: "POST", body: JSON.stringify({ action: "atualizar", protocolo: id, novoStatus: st, obs: obs }) }); buscarDados(); }
     }
 </script>
 </body>
