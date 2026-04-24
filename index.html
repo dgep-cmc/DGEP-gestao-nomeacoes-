@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestão de Nomeações - Gabinete CMC</title>
+    <title>Sistema de Nomeações - Gabinete CMC</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -45,12 +45,12 @@
 </head>
 <body>
 
-<!-- GATE DE LOGIN -->
+<!-- GATE DE LOGIN ATUALIZADO -->
 <div id="login-gate">
     <div class="p-5 border rounded-4 shadow-lg bg-white" style="max-width: 450px;">
         <img src="brasao_cmc.png" width="120" class="mb-4">
-        <h2 class="fw-bold">Portal do Gabinete</h2>
-        <p class="text-muted mb-4">Uso exclusivo @cmc.pr.gov.br</p>
+        <h2 class="fw-bold">Sistema de Nomeações</h2>
+        <p class="text-muted mb-4">Uso exclusivo com e-mail institucional</p>
         <div id="g_id_onload" data-client_id="1093227389780-3scrr45lmsdjgkr670ti1q1dolr4h5oq.apps.googleusercontent.com" data-callback="handleCredentialResponse"></div>
         <div class="g_id_signin" data-type="standard" data-size="large"></div>
     </div>
@@ -61,7 +61,7 @@
     <nav id="sidebar">
         <div class="sidebar-header">
             <img src="brasao_cmc.png" height="60">
-            <div class="small fw-bold mt-2 text-uppercase" style="color: var(--cmc-blue)">Câmara Municipal de Curitiba</div>
+            <div class="small fw-bold mt-2 text-uppercase" style="color: var(--cmc-blue)">Gabinete Parlamentar</div>
             <div class="badge bg-secondary mt-2">DGEP - Gestão de Pessoas</div>
         </div>
         <div class="p-3 flex-grow-1">
@@ -87,10 +87,10 @@
                     <label class="fw-bold mb-2">Vereador(a) Solicitante</label>
                     <select id="c_ver" class="form-select form-select-lg ver-list"></select>
                 </div>
-                <div id="orcamentoMsg" class="orcamento-box bg-light border text-primary">Total: R$ 0,00 / Teto: R$ 92.998,45</div>
+                <div id="orcamentoMsg" class="orcamento-box bg-light border text-primary shadow-sm">Total: R$ 0,00 / Teto: R$ 92.998,45</div>
                 <div class="row g-3" id="gridComposicao"></div>
                 <div class="text-end mt-5">
-                    <button id="btnGerarComp" onclick="processarEnvio('comp')" class="btn btn-primary btn-lg px-5 py-3 fw-bold">GERAR PDF E REGISTRAR</button>
+                    <button id="btnGerarComp" onclick="processarEnvio('comp')" class="btn btn-primary btn-lg px-5 py-3 shadow-sm fw-bold">GERAR PDF E REGISTRAR</button>
                 </div>
             </div>
         </div>
@@ -129,7 +129,7 @@
         <div id="pane-status" class="pane" style="display: none;">
             <div class="card-form">
                 <h4 class="titulo-sessao">Acompanhamento de Solicitações (Retorno DGEP)</h4>
-                <div class="table-responsive"><table class="table align-middle table-hover mt-3"><thead class="table-light"><tr><th>ID</th><th>Nomeado</th><th>Status</th><th>Parecer DGEP</th></tr></thead><tbody id="lista-retorno"></tbody></table></div>
+                <div class="table-responsive"><table class="table align-middle table-hover mt-3"><thead class="table-light"><tr><th>Protocolo</th><th>Nomeado</th><th>Status</th><th>Parecer DGEP</th></tr></thead><tbody id="lista-retorno"></tbody></table></div>
             </div>
         </div>
     </div>
@@ -143,7 +143,7 @@
     const LIMITE = 92998.45;
     const VEREADORES = ["Alexandre Leprevost", "Amália Tortato", "Angelo Vanhoni", "Beto Moraes", "Bruno Pessuti", "Dalton Borba", "Eder Borges", "Maria Leticia", "Marcelo Fachinello", "Tico Kuzma", "Rodrigo Reis", "Serginho do Posto", "Toninho da Farmácia", "Zezinho Sabará"].sort();
 
-    // TRAVA DE LOGIN E SEGURANÇA
+    // TRAVA DE LOGIN E SEGURANÇA INSTITUCIONAL
     function parseJwt(token) {
         var base64Url = token.split('.')[1];
         var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
@@ -154,6 +154,7 @@
         const payload = parseJwt(r.credential);
         const email = payload.email.toLowerCase().trim();
 
+        // Validação obrigatória do domínio CMC
         if(!email.endsWith("@cmc.pr.gov.br")) {
             alert("ACESSO NEGADO:\nApenas contas institucionais @cmc.pr.gov.br são permitidas.");
             location.reload(); return;
@@ -171,7 +172,6 @@
         btn.classList.add('active');
     }
 
-    // INICIALIZAÇÃO E REGRAS
     window.onload = () => {
         const ano = new Date().getFullYear();
         document.querySelectorAll('.date-lock').forEach(i => { i.min=`${ano}-01-01`; i.max=`${ano}-12-31`; });
@@ -204,7 +204,6 @@
 
     function getHead(tit) { return `<table class="pdf-header-table"><tr><td class="pdf-header-logo"><img src="brasao_cmc.png" width="75"></td><td class="pdf-header-title"><h1>${tit}</h1></td></tr></table>`; }
 
-    // ENVIO E PDF
     async function processarEnvio(tipo) {
         let solicitante = (tipo==='comp') ? document.getElementById('c_ver').value : (tipo==='ind'? document.getElementById('i_ver').value : document.getElementById('l_ver').value);
         if(!solicitante) return alert("Por favor, selecione o Vereador responsável.");
@@ -213,7 +212,7 @@
         let h = ""; 
 
         if(tipo==='comp') {
-            d.nomeado = "Ajuste de Estrutura"; d.simbolo = "Variado";
+            d.nomeado = "Revisão Estrutural"; d.simbolo = "Mix";
             let rowH = ""; let tot = 0;
             document.querySelectorAll('.sel-c').forEach((s, i) => { if(s.value){ tot+=CARGOS[s.value]; rowH += `<tr><td style="text-align:center">${i+1}</td><td>${s.value==='CC-1'?'Chefe de Gabinete':'Assessor Parlamentar'}</td><td style="text-align:center"><b>${s.value}</b></td><td style="text-align:right">R$ ${CARGOS[s.value].toLocaleString('pt-BR')}</td></tr>`; }});
             h = `${getHead('INDICAÇÃO DE ESTRUTURA DE GABINETE')}<div class="pdf-body"><p>Vereador(a) Solicitante: <b>${solicitante}</b></p><table class="grid-dados"><thead><tr style="background:#eee"><th>Vaga</th><th>Descrição do Cargo</th><th>Símbolo</th><th>Vencimento</th></tr></thead><tbody>${rowH}</tbody><tfoot><tr style="font-weight:bold; background:#f9f9f9"><td colspan="3" style="text-align:right">TOTAL MENSAL:</td><td style="text-align:right">R$ ${tot.toLocaleString('pt-BR')}</td></tr></tfoot></table></div><div class="pdf-footer"><div class="pdf-linha"></div>Assinatura do(a) Vereador(a)</div>`;
@@ -222,10 +221,9 @@
             h = `${getHead('NOMEAÇÃO EM CARGO DE GABINETE')}<div class="pdf-body"><table class="grid-dados"><tr><td class="label-c">Vereador(a):</td><td>${solicitante}</td></tr><tr><td class="label-c">Nome do Indicado(a):</td><td><b>${d.nomeado.toUpperCase()}</b></td></tr><tr><td class="label-c">Lotação:</td><td>${d.lotacao.toUpperCase()}</td></tr><tr><td class="label-c">Símbolo do Cargo:</td><td><b>${d.simbolo}</b></td></tr><tr><td class="label-c">Data de Nomeação:</td><td>${document.getElementById('i_dat').value.split('-').reverse().join('/')}</td></tr></table></div><div class="pdf-footer"><div class="pdf-linha"></div>Assinatura do(a) Vereador(a)</div>`;
         } else {
             d.nomeado = document.getElementById('l_nom').value; d.lotacao = document.getElementById('l_lid').value; d.responsavel = document.getElementById('l_resp').value; d.simbolo = "CC-8";
-            h = `${getHead('NOMEAÇÃO EM CARGO DE LIDERANÇA')}<div class="pdf-body"><table class="grid-dados"><tr><td class="label-c">Indicado(a):</td><td><b>${d.nomeado.toUpperCase()}</b></td></tr><tr><td class="label-c">Lotação na Liderança:</td><td>${d.lotacao.toUpperCase()}</td></tr><tr><td class="label-c">Data de Nomeação:</td><td>${document.getElementById('l_dat').value.split('-').reverse().join('/')}</td></tr></table></div><div class="pdf-footer"><div style="display:flex; justify-content:space-between; margin-top:20mm"><div style="text-align:center"><div class="pdf-linha" style="width:230px"></div>${solicitante}<br>Solicitante</div><div style="text-align:center"><div class="pdf-linha" style="width:230px"></div>${d.responsavel}<br>Resp. Frequência</div></div></div>`;
+            h = `${getHead('NOMEAÇÃO EM CARGO DE LIDERANÇA')}<div class="pdf-body"><table class="grid-dados"><tr><td class="label-c">Indicado(a):</td><td><b>${d.nomeado.toUpperCase()}</b></td></tr><tr><td class="label-c">Lotação na Liderança:</td><td>${d.lotacao.toUpperCase()}</td></tr><tr><td class="label-c">Data de Nomeação:</td><td>${document.getElementById('l_dat').value.split('-').reverse().join('/')}</td></tr></table></div><div class="pdf-footer"><div style="display:flex; justify-content:space-between; margin-top:20mm"><div style="text-align:center"><div class="pdf-linha" style="width:230px"></div>${solicitante}<br>Solicitante</div><div style="text-align:center"><div class="pdf-linha" style="width:230px"></div>${d.responsavel}<br>Responsável</div></div></div>`;
         }
 
-        // SALVAR NO BANCO E GERAR PDF
         fetch(GAS_URL, { method: "POST", body: JSON.stringify(d) }).then(res => res.json()).then(r => {
             document.getElementById('pdfPage').innerHTML = h;
             const a = document.getElementById('pdfArea'); a.style.display='block';
@@ -236,7 +234,7 @@
     }
 
     async function buscarProtocolos() {
-        const b = document.getElementById('lista-retorno'); b.innerHTML = "Consultando...";
+        const b = document.getElementById('lista-retorno'); b.innerHTML = "Processando...";
         fetch(GAS_URL).then(res => res.json()).then(data => {
             b.innerHTML = "";
             data.forEach(r => {
