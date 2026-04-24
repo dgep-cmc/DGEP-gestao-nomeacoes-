@@ -3,64 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestão de Nomeações - Gabinete CMC</title>
+    <title>Sistema de Nomeações - Gabinete CMC</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <!-- Dependências: HTML2PDF para geração do documento -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     
     <style>
-        :root { --cmc-blue: #004a8d; --light-bg: #f4f7f6; }
+        :root { --cmc-blue: #004a8d; --cmc-red: #dc3545; --light-bg: #f4f7f6; }
         body { background-color: var(--light-bg); font-family: 'Segoe UI', sans-serif; overflow: hidden; margin: 0; }
         
         /* LOGIN OVERLAY */
         #login-gate { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 10000; display: flex; align-items: center; justify-content: center; text-align: center; }
-        
-        /* LAYOUT SIDEBAR */
+        #loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 11000; align-items: center; justify-content: center; flex-direction: column; }
+
+        /* LAYOUT PRINCIPAL */
         .wrapper { display: flex; align-items: stretch; min-height: 100vh; }
         #sidebar { min-width: 300px; max-width: 300px; background: white; border-right: 1px solid #ddd; display: flex; flex-direction: column; box-shadow: 2px 0 10px rgba(0,0,0,0.05); }
         .sidebar-header { padding: 25px; border-bottom: 1px solid #eee; text-align: center; }
         #content { width: 100%; padding: 30px; overflow-y: auto; height: 100vh; background-image: linear-gradient(rgba(244, 247, 246, 0.97), rgba(244, 247, 246, 0.97)), url('brasao_cmc.png'); background-position: center; background-repeat: no-repeat; background-size: 500px; }
         
+        /* BOTÕES NAVEGAÇÃO */
         .nav-btn { width: 100%; text-align: left; padding: 12px 18px; border: none; background: none; border-radius: 10px; margin-bottom: 8px; color: #444; font-weight: 500; display: flex; align-items: center; gap: 12px; transition: 0.2s; }
         .nav-btn:hover { background: #f0f4f8; color: var(--cmc-blue); }
         .nav-btn.active { background: var(--cmc-blue); color: white; box-shadow: 0 4px 10px rgba(0, 74, 141, 0.2); }
 
+        /* CARDS */
         .card-form { background: white; border-radius: 15px; padding: 35px; box-shadow: 0 10px 40px rgba(0,0,0,0.06); }
         .titulo-sessao { color: var(--cmc-blue); font-weight: 800; text-transform: uppercase; border-left: 8px solid var(--cmc-blue); padding-left: 15px; margin-bottom: 30px; }
         .orcamento-box { padding: 18px; border-radius: 12px; font-weight: bold; margin-bottom: 25px; text-align: center; font-size: 1.1rem; }
         
-        /* ESTILO FORMULÁRIO PDF (REFINADO) */
-        .pdf-container { display: none; width: 210mm; background: white; color: #000; padding: 15mm 20mm; font-family: Arial, sans-serif; }
-        .pdf-page { display: flex; flex-direction: column; min-height: 250mm; }
-        .pdf-header-grid { display: grid; grid-template-columns: 140px 1fr; align-items: center; gap: 15px; border-bottom: 2px solid #000; padding-bottom: 5mm; margin-bottom: 8mm; }
-        .pdf-logo { width: 130px; height: auto; }
-        .pdf-header-text { text-align: left; padding-left: 15px; }
-        .pdf-titulo-doc { font-size: 16pt; font-weight: 900; text-transform: uppercase; display: block; }
-        .pdf-subtitulo-doc { font-size: 10pt; font-weight: bold; text-transform: uppercase; color: #333; }
-        .pdf-form-id { position: absolute; top: 12mm; right: 20mm; font-size: 9pt; font-weight: bold; }
-        .f1-texto { text-align: justify; text-indent: 50px; font-size: 11pt; line-height: 1.6; margin-bottom: 8mm; }
-        .grid-pdf { width: 100%; border: 1px solid #000; border-collapse: collapse; margin-top: 5mm; }
-        .grid-pdf td { border: 1px solid #000; padding: 10px; font-size: 10pt; }
-        .label-pdf { background: #f2f2f2; font-weight: bold; width: 30%; text-transform: uppercase; font-size: 8pt; }
+        /* ======== ESTILO TÉCNICO DO PDF (OFICIAL) ======== */
+        .pdf-container { display: none; width: 210mm; background: white; color: #000; padding: 10mm 15mm; font-family: Arial, Helvetica, sans-serif; position: relative; }
+        .pdf-header-box { width: 100%; border: 1.5px solid #000; display: flex; align-items: center; margin-bottom: 8mm; }
+        .pdf-logo { width: 120px; padding: 10px; border-right: 1.5px solid #000; text-align: center; }
+        .pdf-titles { flex: 1; text-align: center; padding: 10px; text-transform: uppercase; font-weight: bold; }
+        .pdf-body { font-size: 11.5pt; line-height: 1.6; text-align: justify; }
+        .f1-text { text-indent: 50px; margin-bottom: 8mm; }
+        .pdf-table { width: 100%; border-collapse: collapse; border: 1.5px solid #000; margin-top: 5mm; }
+        .pdf-table td { border: 1px solid #000; padding: 10px; }
+        .pdf-label { background: #f2f2f2; font-weight: bold; width: 35%; text-transform: uppercase; font-size: 8.5pt; }
         .pdf-footer { margin-top: auto; text-align: center; padding-top: 15mm; }
-        .pdf-linha { border-top: 1px solid #000; width: 300px; margin: 0 auto 5px auto; }
+        .pdf-line { border-top: 1.5px solid #000; width: 300px; margin: 0 auto 5px auto; }
+        .pdf-form-n { position: absolute; top: 10mm; right: 15mm; font-size: 9pt; font-weight: bold; }
     </style>
 </head>
 <body>
 
+<!-- OVERLAY DE PROCESSAMENTO -->
+<div id="loading-overlay">
+    <div class="spinner-border text-primary mb-3"></div>
+    <div id="loading-text" class="fw-bold text-primary text-center px-4">Enviando indicação e gerando protocolo oficial...</div>
+</div>
+
+<!-- GATE DE LOGIN -->
 <div id="login-gate">
     <div class="p-5 border rounded-4 shadow-lg bg-white" style="max-width: 450px;">
         <img src="brasao_cmc.png" width="120" class="mb-4">
         <h2 class="fw-bold">Sistema de Nomeações</h2>
-        <p class="text-muted mb-4">Uso exclusivo @cmc.pr.gov.br</p>
+        <p class="text-muted mb-4">Portal de Indicações - Gabinetes CMC</p>
         <div id="g_id_onload" data-client_id="1093227389780-3scrr45lmsdjgkr670ti1q1dolr4h5oq.apps.googleusercontent.com" data-callback="handleCredentialResponse"></div>
         <div class="g_id_signin" data-type="standard" data-size="large"></div>
     </div>
 </div>
 
 <div class="wrapper" id="app-body" style="display: none;">
-    <!-- BARRA LATERAL RESTAURADA -->
+    <!-- SIDEBAR -->
     <nav id="sidebar">
         <div class="sidebar-header">
             <img src="brasao_cmc.png" height="60">
@@ -80,6 +89,7 @@
         </div>
     </nav>
 
+    <!-- CONTENT -->
     <div id="content">
         <!-- 1. ESTRUTURA -->
         <div id="pane-comp" class="pane">
@@ -89,26 +99,25 @@
                     <label class="fw-bold mb-2">Vereador(a) Solicitante</label>
                     <select id="c_ver" class="form-select form-select-lg ver-list"></select>
                 </div>
-                <!-- BARRA VERDE ATÉ O LIMITE -->
                 <div id="orcamentoMsg" class="orcamento-box bg-success text-white shadow-sm border-0">Total: R$ 0,00 / Teto: R$ 92.998,45</div>
                 <div class="row g-3" id="gridComposicao"></div>
                 <div class="text-end mt-5">
-                    <button id="btnGerarComp" onclick="processarEnvio('comp')" class="btn btn-primary btn-lg px-5 py-3 fw-bold">GERAR PDF E REGISTRAR</button>
+                    <button id="btnGerarComp" onclick="processarEnvio('comp')" class="btn btn-primary btn-lg px-5 py-3 shadow-sm fw-bold">PROTOCOLAR INDICAÇÃO</button>
                 </div>
             </div>
         </div>
 
-        <!-- 2. GABINETE -->
+        <!-- 2. GABINETE INDIVIDUAL -->
         <div id="pane-ind" class="pane" style="display: none;">
             <div class="card-form">
                 <h4 class="titulo-sessao">Nomeação em Cargo de Gabinete</h4>
                 <div class="row g-4">
-                    <div class="col-md-6"><label class="fw-bold">Vereador(a)</label><select id="i_ver" class="form-select form-select-lg ver-list"></select></div>
-                    <div class="col-md-6"><label class="fw-bold">Pessoa Indicada</label><input type="text" id="i_nom" class="form-control form-control-lg"></div>
-                    <div class="col-md-4"><label class="fw-bold">Cargo</label><select id="i_sim" class="form-select form-select-lg"></select></div>
-                    <div class="col-md-4"><label class="fw-bold">Lotação</label><input type="text" id="i_lot" class="form-control form-control-lg" value="Gabinete Parlamentar"></div>
-                    <div class="col-md-4"><label class="fw-bold">Data Nomeação</label><input type="date" id="i_dat" class="form-control form-control-lg date-lock"></div>
-                    <div class="col-12 text-end mt-4"><button onclick="processarEnvio('ind')" class="btn btn-primary btn-lg px-5">GERAR PDF E REGISTRAR</button></div>
+                    <div class="col-md-6"><label class="fw-bold mb-1">Vereador(a)</label><select id="i_ver" class="form-select form-select-lg ver-list"></select></div>
+                    <div class="col-md-6"><label class="fw-bold mb-1">Pessoa Indicada</label><input type="text" id="i_nom" class="form-control form-control-lg" placeholder="Nome Completo"></div>
+                    <div class="col-md-4"><label class="fw-bold mb-1">Cargo/Símbolo</label><select id="i_sim" class="form-select form-select-lg"></select></div>
+                    <div class="col-md-4"><label class="fw-bold mb-1">Lotação</label><input type="text" id="i_lot" class="form-control form-control-lg" value="Gabinete Parlamentar"></div>
+                    <div class="col-md-4"><label class="fw-bold mb-1">Data de Nomeação</label><input type="date" id="i_dat" class="form-control form-control-lg date-lock"></div>
+                    <div class="col-12 text-end mt-4"><button onclick="processarEnvio('ind')" class="btn btn-primary btn-lg px-5 py-3 fw-bold">PROTOCOLAR INDICAÇÃO</button></div>
                 </div>
             </div>
         </div>
@@ -118,30 +127,28 @@
             <div class="card-form">
                 <h4 class="titulo-sessao">Nomeação em Cargo de Liderança</h4>
                 <div class="row g-4">
-                    <div class="col-md-6"><label class="fw-bold">Vereador Solicitante</label><select id="l_ver" class="form-select form-select-lg ver-list"></select></div>
-                    <div class="col-md-6"><label class="fw-bold">Pessoa Indicada</label><input type="text" id="l_nom" class="form-control form-control-lg"></div>
-                    <div class="col-md-6"><label class="fw-bold">Liderança de</label><input type="text" id="l_lid" class="form-control form-control-lg"></div>
-                    <div class="col-md-6"><label class="fw-bold">Resp. Frequência</label><select id="l_resp" class="form-select form-select-lg ver-list"></select></div>
-                    <div class="col-md-12"><label class="fw-bold">Data Nomeação</label><input type="date" id="l_dat" class="form-control form-control-lg date-lock"></div>
-                    <div class="col-12 text-end mt-4"><button onclick="processarEnvio('lid')" class="btn btn-primary btn-lg px-5">GERAR PDF E REGISTRAR</button></div>
+                    <div class="col-md-6"><label class="fw-bold mb-1">Vereador(a) Solicitante (Indica)</label><select id="l_ver" class="form-select form-select-lg ver-list"></select></div>
+                    <div class="col-md-6"><label class="fw-bold mb-1">Pessoa Indicada</label><input type="text" id="l_nom" class="form-control form-control-lg" placeholder="Nome Completo"></div>
+                    <div class="col-md-6"><label class="fw-bold mb-1">Lotação na Liderança de</label><input type="text" id="l_lid" class="form-control form-control-lg" placeholder="Ex: Bloco PT-PV"></div>
+                    <div class="col-md-6"><label class="fw-bold mb-1">Vereador Responsável (Frequência)</label><select id="l_resp" class="form-select form-select-lg ver-list"></select></div>
+                    <div class="col-md-12"><label class="fw-bold mb-1">Data de Nomeação</label><input type="date" id="l_dat" class="form-control form-control-lg date-lock"></div>
+                    <div class="col-12 text-end mt-4"><button onclick="processarEnvio('lid')" class="btn btn-primary btn-lg px-5 py-3 fw-bold">PROTOCOLAR INDICAÇÃO</button></div>
                 </div>
             </div>
         </div>
 
-        <!-- 4. PROTOCOLOS -->
+        <!-- 4. STATUS -->
         <div id="pane-status" class="pane" style="display: none;">
             <div class="card-form">
-                <h4 class="titulo-sessao">Meus Protocolos (Retorno DGEP)</h4>
-                <table class="table align-middle mt-3"><thead><tr><th>ID</th><th>Nomeado</th><th>Status</th><th>Parecer DGEP</th></tr></thead><tbody id="lista-retorno"></tbody></table>
+                <h4 class="titulo-sessao">Acompanhamento de Protocolos (DGEP)</h4>
+                <div class="table-responsive"><table class="table align-middle table-hover mt-3"><thead class="table-light"><tr><th>ID</th><th>Indicado</th><th>Status</th><th>Parecer da Gestão</th></tr></thead><tbody id="lista-retorno"></tbody></table></div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- CONTAINER PDF ESTILIZADO -->
-<div id="pdfArea" class="pdf-container">
-    <div class="pdf-page" id="pdfPage"></div>
-</div>
+<!-- ÁREA TÉCNICA DO PDF (OCULTA) -->
+<div id="pdfArea" class="pdf-container"><div id="pdfPage"></div></div>
 
 <script>
     const GAS_URL = "https://script.google.com/macros/s/AKfycbyHtQvVUKssbP2pZNAj7IVrVtPfn9t8uVNtzc_EmIdbtv7q4az8eCacDO1Akc6gm1TsWw/exec";
@@ -149,13 +156,16 @@
     const LIMITE = 92998.45;
     const VEREADORES = ["Alexandre Leprevost", "Amália Tortato", "Angelo Vanhoni", "Beto Moraes", "Bruno Pessuti", "Dalton Borba", "Eder Borges", "Maria Leticia", "Marcelo Fachinello", "Tico Kuzma", "Rodrigo Reis", "Serginho do Posto", "Toninho da Farmácia", "Zezinho Sabará"].sort();
 
+    // SEGURANÇA E LOGIN
+    function parseJwt(t) { var b = t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'); return JSON.parse(decodeURIComponent(window.atob(b).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''))); }
+
     async function handleCredentialResponse(r) {
-        const payload = JSON.parse(decodeURIComponent(atob(r.credential.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')));
+        const payload = parseJwt(r.credential);
         const email = payload.email.toLowerCase().trim();
-        if(!email.endsWith("@cmc.pr.gov.br")) { alert("Acesso exclusivo @cmc.pr.gov.br"); location.reload(); return; }
+        if(!email.endsWith("@cmc.pr.gov.br")) { alert("Uso restrito a e-mails institucionais CMC."); location.reload(); return; }
         document.getElementById('login-gate').style.display = 'none';
         document.getElementById('app-body').style.display = 'flex';
-        document.getElementById('user-display').innerText = email;
+        document.getElementById('user-display').innerHTML = `<i class="bi bi-person-circle"></i> ${email}`;
     }
 
     function showPane(id, btn) {
@@ -165,15 +175,16 @@
         btn.classList.add('active');
     }
 
+    // REGRAS DE NEGÓCIO E INTERFACE
     window.onload = () => {
         const ano = new Date().getFullYear();
         document.querySelectorAll('.date-lock').forEach(i => { i.min=`${ano}-01-01`; i.max=`${ano}-12-31`; });
         document.querySelectorAll('.ver-list').forEach(s => { s.add(new Option("-- Selecione o Vereador --", "")); VEREADORES.forEach(v => s.add(new Option(v,v))); });
-        const i_sim = document.getElementById('i_sim');
-        Object.keys(CARGOS).forEach(s => i_sim.add(new Option(`${s} - ${s==='CC-1'?'Chefe de Gabinete':'Assessor Parlamentar'}`, s)));
+        const i_sim = document.getElementById('i_sim'); Object.keys(CARGOS).forEach(s => i_sim.add(new Option(`${s} - ${s==='CC-1'?'Chefe':'Assessor'}`, s)));
+        
         const grid = document.getElementById('gridComposicao');
         for(let i=1; i<=9; i++) {
-            let opt = i === 1 ? '' : '<option value="">-- Vazia --</option>';
+            let opt = i === 1 ? '' : '<option value="">-- Vaga Vazia --</option>';
             Object.keys(CARGOS).forEach(s => { if((i==1 && s=="CC-1") || (i>1 && s!="CC-1")) opt += `<option value="${s}">${s} - R$ ${CARGOS[s].toLocaleString('pt-BR')}</option>`; });
             grid.innerHTML += `<div class="col-md-4"><label class="small fw-bold">Vaga ${i}</label><select id="v-${i}" class="form-select sel-c" onchange="seq(${i})" ${i==1?'disabled':(i==2?'':'disabled')}>${opt}</select></div>`;
             if(i===1) document.getElementById('v-1').value = "CC-1";
@@ -187,61 +198,67 @@
         let t = 0; document.querySelectorAll('.sel-c').forEach(s => { if(s.value) t += CARGOS[s.value]; });
         const box = document.getElementById('orcamentoMsg'); 
         box.innerText = `Total Gabinete: R$ ${t.toLocaleString('pt-BR')} / Teto: R$ 92.998,45`;
-        box.className = "orcamento-box " + (t > LIMITE ? "bg-danger text-white shadow-sm" : "bg-success text-white shadow-sm");
+        box.className = "orcamento-box text-white shadow-sm " + (t > LIMITE ? "bg-danger" : "bg-success");
         document.getElementById('btnGerarComp').disabled = (t > LIMITE);
     }
 
-    function getPDFContent(tit, sub, corpo, rows, assinaturas) {
-        let dadosRows = rows.map(r => `<tr><td class="label-pdf">${r.l}</td><td>${r.v}</td></tr>`).join('');
+    // AUXILIAR PDF OFICIAL
+    function genPDFBase(titulo, subtitulo, corpo, dados, assinaturas) {
+        let rowsHtml = dados.map(d => `<tr><td class="pdf-label">${d.l}</td><td>${d.v}</td></tr>`).join('');
         return `
-            <div class="pdf-form-id">Formulário 1</div>
-            <div class="pdf-header-grid">
-                <img src="brasao_cmc.png" class="pdf-logo">
-                <div class="pdf-header-text">
-                    <span class="pdf-titulo-doc">${tit}</span>
-                    <span class="pdf-subtitulo-doc">${sub}</span>
-                </div>
+            <div class="pdf-form-n">Formulário CMC</div>
+            <div class="pdf-header-box">
+                <div class="pdf-logo"><img src="brasao_cmc.png" width="90"></div>
+                <div class="pdf-titles"><span style="font-size:16pt">${titulo}</span><br><span style="font-size:10pt">${subtitulo}</span></div>
             </div>
             <div class="pdf-body">
-                <p>Excelentíssimo Senhor Presidente da Comissão Executiva,</p>
-                <p class="f1-texto">${corpo}</p>
-                <table class="grid-pdf">${dadosRows}</table>
+                <p><b>EXCELENTÍSSIMO SENHOR PRESIDENTE DA COMISSÃO EXECUTIVA</b></p>
+                <p class="f1-text">${corpo}</p>
+                <table class="pdf-table">${rowsHtml}</table>
                 <p style="text-align:right; margin-top:10mm">Curitiba, ${new Date().toLocaleDateString('pt-BR', {day:'numeric', month:'long', year:'numeric'})}.</p>
             </div>
             <div class="pdf-footer">${assinaturas}</div>`;
     }
 
+    // PROCESSAMENTO E ANEXAÇÃODrive
     async function processarEnvio(tipo) {
-        let solicitante = (tipo==='comp') ? document.getElementById('c_ver').value : (tipo==='ind'? document.getElementById('i_ver').value : document.getElementById('l_ver').value);
-        if(!solicitante) return alert("Selecione o Vereador.");
+        const ver = (tipo==='comp') ? document.getElementById('c_ver').value : (tipo==='ind' ? document.getElementById('i_ver').value : document.getElementById('l_ver').value);
+        if(!ver) return alert("Selecione o Vereador!");
+        
+        document.getElementById('loading-overlay').style.display='flex';
 
-        let d = { action: "gravar", tipo: tipo, solicitante: solicitante, nomeado: "", cargo: "", simbolo: "", lotacao: "", responsavel: "" };
-        let html = ""; 
+        let d = { action: "gravar", tipo: tipo, solicitante: ver, nomeado: "", cargo: "", simbolo: "", lotacao: "", responsavel: "", pdfBase64: "" };
+        let h = ""; 
 
         if(tipo==='comp') {
             d.nomeado = "Revisão Estrutural"; let r = ""; document.querySelectorAll('.sel-c').forEach((s, i) => { if(s.value) r += `Vaga ${i+1}: ${s.value} | `; });
-            const ass = `<div class="pdf-assinatura-area"><div class="pdf-linha"></div><b>Assinatura do(a) Vereador(a)</b></div>`;
-            html = getPDFContent("Indicação de Estrutura", "Composição de Gabinete", `O (A) Vereador(a) <b>${solicitante.toUpperCase()}</b> solicita a seguinte composição:`, [{l:"Vereador", v:solicitante}, {l:"Equipe", v:r}], ass);
+            h = genPDFBase("Indicação de Estrutura", "Composição de Gabinete", `O (A) Vereador(a) <b>${ver.toUpperCase()}</b> solicita a seguinte composição:`, [{l:"Vereador", v:ver}, {l:"Equipe", v:r}], `<div class="pdf-line"></div><b>Assinatura do(a) Vereador(a)</b>`);
         } else if(tipo==='ind') {
-            d.nomeado = document.getElementById('i_nom').value; d.simbolo = document.getElementById('i_sim').value; d.lotacao = "Gabinete";
-            const ass = `<div class="pdf-assinatura-area"><div class="pdf-linha"></div><b>Assinatura do(a) Vereador(a)</b></div>`;
-            html = getPDFContent("Indicação de Nomeação", "Estrutura de Apoio Parlamentar", `O (A) Vereador(a) <b>${solicitante.toUpperCase()}</b> indica a pessoa abaixo identificada:`, [{l:"Nome", v:d.nomeado}, {l:"Lotação", v:"Gabinete Parlamentar"}, {l:"Símbolo", v:d.simbolo}], ass);
+            d.nomeado = document.getElementById('i_nom').value; d.simbolo = document.getElementById('i_sim').value; d.lotacao = "Gabinete"; d.cargo = "Assessor";
+            h = genPDFBase("Indicação de Nomeação", "Estrutura de Apoio Parlamentar", `O (A) Vereador(a) <b>${ver.toUpperCase()}</b> indica a pessoa identificada abaixo:`, [{l:"Nome", v:d.nomeado.toUpperCase()}, {l:"Lotação", v:"Gabinete Parlamentar"}, {l:"Símbolo", v:d.simbolo}, {l:"Data Nomeação", v:document.getElementById('i_dat').value.split('-').reverse().join('/')}], `<div class="pdf-line"></div><b>Assinatura do(a) Vereador(a)</b>`);
         } else {
-            d.nomeado = document.getElementById('l_nom').value; d.lotacao = document.getElementById('l_lid').value; d.responsavel = document.getElementById('l_resp').value;
-            const ass = `<div style="display:flex; justify-content:space-around; margin-top:10mm"><div style="text-align:center"><div class="pdf-linha" style="width:230px"></div>${solicitante}<br>Solicitante</div><div style="text-align:center"><div class="pdf-linha" style="width:230px"></div>${d.responsavel}<br>Resp. Frequência</div></div>`;
-            html = getPDFContent("Nomeação Liderança", "Cargo em Comissão de Liderança", `O (A) Vereador(a) <b>${solicitante.toUpperCase()}</b> solicita a nomeação abaixo:`, [{l:"Nome", v:d.nomeado}, {l:"Lotação", v:d.lotacao}, {l:"Cargo", v:"CC-8"}], ass);
+            d.nomeado = document.getElementById('l_nom').value; d.lotacao = document.getElementById('l_lid').value; d.responsavel = document.getElementById('l_resp').value; d.simbolo = "CC-8";
+            const ass = `<div style="display:flex; justify-content:space-around; margin-top:5mm"><div style="flex:1"><div class="pdf-line" style="width:230px"></div>${ver.toUpperCase()}<br>Solicitante</div><div style="flex:1"><div class="pdf-line" style="width:230px"></div>${d.responsavel.toUpperCase()}<br>Resp. Frequência</div></div>`;
+            h = genPDFBase("Nomeação Liderança", "Cargo de Apoio Político", `O (A) Vereador(a) <b>${ver.toUpperCase()}</b> solicita a nomeação abaixo:`, [{l:"Nome", v:d.nomeado.toUpperCase()}, {l:"Lotação", v:d.lotacao.toUpperCase()}, {l:"Símbolo", v:"CC-8"}], ass);
         }
 
-        fetch(GAS_URL, { method: "POST", body: JSON.stringify(d) }).then(res => res.json()).then(r => {
-            document.getElementById('pdfPage').innerHTML = html;
-            const a = document.getElementById('pdfArea'); a.style.display='block';
-            html2pdf().set({ margin:0, filename: r.protocol+".pdf", image:{type:'jpeg', quality:0.98}, html2canvas:{scale:2}, jsPDF:{unit:'mm', format:'a4', orientation:'portrait'} })
-                .from(document.getElementById('pdfPage')).save().then(() => { a.style.display='none'; alert("Protocolo: " + r.protocol); location.reload(); });
+        document.getElementById('pdfPage').innerHTML = h;
+        const opt = { margin:0, filename: "IND_"+ver+".pdf", image:{type:'jpeg', quality:1}, html2canvas:{scale:2, useCORS:true}, jsPDF:{unit:'mm', format:'a4', orientation:'portrait'} };
+
+        // CONVERTE PARA BASE64 E ENVIA
+        html2pdf().set(opt).from(document.getElementById('pdfPage')).outputPdf().then(pdfBinary => {
+            d.pdfBase64 = btoa(pdfBinary);
+            fetch(GAS_URL, { method: "POST", body: JSON.stringify(d) }).then(res => res.json()).then(r => {
+                // Também salva uma cópia local para o gabinete
+                html2pdf().set(opt).from(document.getElementById('pdfPage')).save();
+                alert("Protocolado com sucesso e enviado à DGEP!\nID: " + r.protocol);
+                location.reload();
+            });
         });
     }
 
     async function buscarProtocolos() {
-        const b = document.getElementById('lista-retorno'); b.innerHTML = "Consultando...";
+        const b = document.getElementById('lista-retorno'); b.innerHTML = "Processando...";
         fetch(GAS_URL).then(res => res.json()).then(data => {
             b.innerHTML = "";
             data.forEach(r => {
