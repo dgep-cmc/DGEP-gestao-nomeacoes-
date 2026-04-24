@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestão de Nomeações - Gabinete</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+        :root { --cmc-blue: #004a8d; }
+        body { background-color: #f4f7f6; font-family: 'Segoe UI', sans-serif; }
+        .sidebar { min-width: 280px; background: white; border-right: 1px solid #ddd; min-height: 100vh; padding: 20px; }
+        .nav-link { color: #444; border-radius: 8px; margin-bottom: 5px; cursor: pointer; border: 1px solid transparent; padding: 12px; }
+        .nav-link.active { background: var(--cmc-blue); color: white; }
+        .card-form { background: white; border-radius: 15px; padding: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+        #login-gate { position: fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:9999; display:flex; align-items:center; justify-content:center; }
+    </style>
+</head>
+<body>
+
+<div id="login-gate">
+    <div class="text-center">
+        <img src="brasao_cmc.png" width="120" class="mb-3">
+        <h3>Portal do Gabinete</h3>
+        <p>Acesso via e-mail institucional</p>
+        <div id="g_id_onload" data-client_id="1093227389780-3scrr45lmsdjgkr670ti1q1dolr4h5oq.apps.googleusercontent.com" data-callback="handleLogin"></div>
+        <div class="g_id_signin" data-type="standard"></div>
+    </div>
+</div>
+
+<div class="d-flex" id="app" style="display:none !important;">
+    <div class="sidebar">
+        <div class="text-center mb-4"><img src="brasao_cmc.png" height="50"></div>
+        <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist">
+            <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#tab1">Indicação Estrutura</button>
+            <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab2">Nomeação Gabinete</button>
+            <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab3">Nomeação Liderança</button>
+            <hr>
+            <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab4" onclick="buscarProtocolos()">Meus Protocolos</button>
+        </div>
+        <div class="mt-5 small text-center text-muted border-top pt-3" id="u-display"></div>
+    </div>
+
+    <div class="p-4 w-100 tab-content">
+        <!-- FORM ESTRUTURA -->
+        <div class="tab-pane fade show active" id="tab1">
+            <div class="card-form">
+                <h4 class="mb-4">Indicação de Estrutura de Gabinete (até 9 Vagas)</h4>
+                <label>Vereador(a)</label>
+                <select id="c_ver" class="form-select mb-3 ver-list"></select>
+                <div class="row g-2" id="gridComp"></div>
+                <button class="btn btn-primary mt-4 w-100" onclick="enviar('comp')">Gerar PDF e Gravar</button>
+            </div>
+        </div>
+        <!-- TAB 2: NOMEACAO GABINETE (Resumido por brevidade, aplique o layout anterior) -->
+        <div class="tab-pane fade" id="tab2">
+            <div class="card-form">
+                <h4>Nomeação em Cargo de Gabinete</h4>
+                <div class="row g-3">
+                   <div class="col-md-6"><label>Vereador</label><select id="i_ver" class="form-select ver-list"></select></div>
+                   <div class="col-md-6"><label>Indicado</label><input type="text" id="i_nom" class="form-control"></div>
+                   <div class="col-md-6"><label>Símbolo</label><select id="i_sim" class="form-select"></select></div>
+                   <div class="col-md-6"><label>Data</label><input type="date" id="i_dat" class="form-control"></div>
+                   <button class="btn btn-primary mt-3" onclick="enviar('ind')">Gravar</button>
+                </div>
+            </div>
+        </div>
+        <!-- TAB 3: LIDERANÇA -->
+        <div class="tab-pane fade" id="tab3">
+            <div class="card-form">
+                <h4>Nomeação em Cargo de Liderança</h4>
+                <div class="row g-3">
+                   <div class="col-md-6"><label>Solicitante</label><select id="l_ver" class="form-select ver-list"></select></div>
+                   <div class="col-md-6"><label>Indicado</label><input type="text" id="l_nom" class="form-control"></div>
+                   <div class="col-md-6"><label>Responsável</label><select id="l_resp" class="form-select ver-list"></select></div>
+                   <button class="btn btn-primary mt-3" onclick="enviar('lid')">Gravar</button>
+                </div>
+            </div>
+        </div>
+        <!-- TAB 4: PROTOCOLOS -->
+        <div class="tab-pane fade" id="tab4">
+            <div class="card-form">
+                <h4>Acompanhamento</h4>
+                <table class="table mt-3"><thead><tr><th>ID</th><th>Nomeado</th><th>Status</th><th>Obs</th></tr></thead><tbody id="lista-u"></tbody></table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const GAS_URL = "SUA_URL_DO_GAS_AQUI";
+    const CARGOS = {"CC-1": 18599.66, "CC-2": 16533.01, "CC-3": 14466.48, "CC-4": 12399.85, "CC-5": 10333.14, "CC-6": 8266.53, "CC-7": 6199.89, "CC-8": 4133.19, "CC-9": 3099.98};
+    const VEREADORES = ["Alexandre Leprevost", "Amália Tortato", "Angelo Vanhoni", "Beto Moraes", "Dalton Borba", "Eder Borges", "Maria Leticia", "Tico Kuzma"].sort();
+
+    function handleLogin(r) {
+        const p = JSON.parse(atob(r.credential.split('.')[1]));
+        if(!p.email.endsWith("@cmc.pr.gov.br")) return alert("Exclusivo @cmc.pr.gov.br");
+        document.getElementById('login-gate').style.display='none';
+        document.getElementById('app').style.display='flex';
+        document.getElementById('u-display').innerText = p.email;
+    }
+
+    window.onload = () => {
+        document.querySelectorAll('.ver-list').forEach(s => { s.add(new Option("-- Selecione --", "")); VEREADORES.forEach(v => s.add(new Option(v,v))); });
+        const sim = document.getElementById('i_sim'); Object.keys(CARGOS).forEach(s => sim.add(new Option(s,s)));
+        const g = document.getElementById('gridComp');
+        for(let i=1; i<=9; i++) {
+            g.innerHTML += `<div class="col-md-4 mb-2"><label class="small">Vaga ${i}</label><select id="v-${i}" class="form-select"><option value="">Vazia</option>${Object.keys(CARGOS).map(s => `<option value="${s}">${s}</option>`).join('')}</select></div>`;
+        }
+    };
+
+    async function enviar(t) {
+        let d = { action: "gravar", tipo: t };
+        // ... Logica de captura dos campos ...
+        fetch(GAS_URL, { method: "POST", body: JSON.stringify(d) }).then(r => r.json()).then(res => alert("Protocolo: " + res.protocol));
+    }
+
+    async function buscarProtocolos() {
+        fetch(GAS_URL).then(r => r.json()).then(data => {
+            const b = document.getElementById('lista-u'); b.innerHTML = "";
+            data.forEach(r => b.innerHTML += `<tr><td>${r[0]}</td><td>${r[3]}</td><td><span class="badge bg-secondary">${r[8]}</span></td><td>${r[9]}</td></tr>`);
+        });
+    }
+</script>
+</body>
+</html>

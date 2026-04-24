@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Processamento DGRH - CMC</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+        body { background-color: #fcecec; font-family: sans-serif; }
+        .admin-card { background: white; border-radius: 15px; padding: 40px; margin-top: 50px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        #login-gate { position: fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:9999; display:flex; align-items:center; justify-content:center; text-align:center; }
+    </style>
+</head>
+<body>
+
+<div id="login-gate">
+    <div>
+        <img src="brasao_cmc.png" width="100" class="mb-4">
+        <h2>Área Restrita DGRH</h2>
+        <p>Apenas administradores cadastrados na planilha</p>
+        <div id="g_id_onload" data-client_id="1093227389780-3scrr45lmsdjgkr670ti1q1dolr4h5oq.apps.googleusercontent.com" data-callback="handleAdminLogin"></div>
+        <div class="g_id_signin" data-type="standard"></div>
+    </div>
+</div>
+
+<div class="container" id="admin-app" style="display:none;">
+    <div class="admin-card">
+        <h3 class="text-danger mb-4"><i class="bi bi-shield-lock"></i> Processamento de Nomeações</h3>
+        <table class="table table-striped align-middle">
+            <thead class="table-dark"><tr><th>Protocolo</th><th>Vereador</th><th>Indicado</th><th>Status</th><th>Ações</th></tr></thead>
+            <tbody id="lista-admin"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const GAS_URL = "SUA_URL_DO_GAS_AQUI";
+
+    async function handleAdminLogin(r) {
+        const p = JSON.parse(atob(r.credential.split('.')[1]));
+        const email = p.email.toLowerCase().trim();
+
+        // 1. Busca lista de admins na planilha
+        const resp = await fetch(GAS_URL + "?path=getAdmins");
+        const admins = await resp.json();
+
+        if(admins.includes(email)) {
+            document.getElementById('login-gate').style.display = 'none';
+            document.getElementById('admin-app').style.display = 'block';
+            carregarDados();
+        } else {
+            alert("Você não tem permissão de administrador na planilha!");
+            location.reload();
+        }
+    }
+
+    async function carregarDados() {
+        fetch(GAS_URL).then(r => r.json()).then(data => {
+            const b = document.getElementById('lista-admin'); b.innerHTML = "";
+            data.forEach(r => {
+                b.innerHTML += `<tr><td>${r[0]}</td><td>${r[2]}</td><td>${r[3]}</td><td><b>${r[8]}</b></td>
+                <td><button class="btn btn-sm btn-success" onclick="atualizarStatus('${r[0]}','Aprovado')">Aprovar</button>
+                <button class="btn btn-sm btn-danger" onclick="atualizarStatus('${r[0]}','Recusado')">Negar</button></td></tr>`;
+            });
+        });
+    }
+
+    function atualizarStatus(id, st) {
+        const obs = prompt("Motivo/Observação:");
+        fetch(GAS_URL, { method: "POST", body: JSON.stringify({ action: "atualizar", protocolo: id, novoStatus: st, obs: obs }) }).then(() => carregarDados());
+    }
+</script>
+</body>
+</html>
