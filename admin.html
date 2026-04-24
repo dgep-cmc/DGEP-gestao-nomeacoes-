@@ -2,36 +2,36 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>RH CMC - Processamento de Nomeações</title>
+    <title>Processamento DGEP - Diretoria de Gestão de Pessoas</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
-        :root { --cmc-red: #dc3545; }
-        body { background-color: #fcecec; font-family: 'Segoe UI', sans-serif; }
+        body { background-color: #fffafa; font-family: 'Segoe UI', sans-serif; }
         #login-gate { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 10000; display: flex; align-items: center; justify-content: center; text-align: center; }
-        .admin-container { max-width: 1000px; margin: 50px auto; background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 2px solid var(--cmc-red); }
+        .admin-card { max-width: 1200px; margin: 40px auto; background: white; padding: 35px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-top: 5px solid #dc3545; }
     </style>
 </head>
 <body>
 
 <div id="login-gate">
-    <div class="text-center p-5 border rounded">
+    <div class="p-5 border rounded shadow bg-white">
         <img src="brasao_cmc.png" width="100" class="mb-4">
-        <h3>Área Restrita DGRH</h3>
-        <p>Apenas administradores autorizados</p>
+        <h3 class="fw-bold">Diretoria de Gestão de Pessoas</h3>
+        <p class="text-muted mb-4">Autentique-se para processar as solicitações</p>
         <div id="g_id_onload" data-client_id="1093227389780-3scrr45lmsdjgkr670ti1q1dolr4h5oq.apps.googleusercontent.com" data-callback="handleAdminLogin"></div>
         <div class="g_id_signin" data-type="standard"></div>
     </div>
 </div>
 
 <div class="container" id="admin-app" style="display:none;">
-    <div class="admin-container">
+    <div class="admin-card">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="text-danger fw-bold">Processamento DGRH</h2>
+            <h2 class="text-danger fw-bold"><i class="bi bi-shield-check"></i> Controle de Nomeações DGEP</h2>
             <button class="btn btn-outline-secondary btn-sm" onclick="location.reload()">Atualizar Lista</button>
         </div>
         <div class="table-responsive">
-            <table class="table table-striped align-middle">
+            <table class="table table-hover align-middle">
                 <thead class="table-dark">
                     <tr><th>Protocolo</th><th>Vereador</th><th>Nomeado</th><th>Status</th><th>Ações</th></tr>
                 </thead>
@@ -48,33 +48,35 @@
         const payload = JSON.parse(decodeURIComponent(escape(atob(r.credential.split('.')[1]))));
         const email = payload.email.toLowerCase().trim();
 
-        // Verifica se é admin na planilha
-        const resp = await fetch(GAS_URL + "?path=getAdmins");
-        const admins = await resp.json();
+        try {
+            const resp = await fetch(GAS_URL + "?path=getAdmins");
+            const admins = await resp.json();
 
-        if(admins.includes(email)) {
-            document.getElementById('login-gate').style.display = 'none';
-            document.getElementById('admin-app').style.display = 'block';
-            buscarDados();
-        } else {
-            alert("Acesso Negado: E-mail não cadastrado como administrador.");
-            location.reload();
-        }
+            if(admins.includes(email)) {
+                document.getElementById('login-gate').style.display = 'none';
+                document.getElementById('admin-app').style.display = 'block';
+                buscarDados();
+            } else {
+                alert("ACESSO NEGADO: Seu e-mail não consta na lista da Diretoria de Gestão de Pessoas.");
+                location.reload();
+            }
+        } catch(e) { alert("Erro de conexão. Tente novamente."); }
     }
 
     async function buscarDados() {
-        const b = document.getElementById('lista-admin'); b.innerHTML = "Processando banco de dados...";
+        const b = document.getElementById('lista-admin'); b.innerHTML = "Buscando dados...";
         fetch(GAS_URL).then(res => res.json()).then(data => {
             b.innerHTML = "";
             data.forEach(r => {
+                const sClass = r[8] === "Aprovado" ? "text-success" : (r[8] === "Recusado" ? "text-danger" : "text-warning");
                 b.innerHTML += `<tr>
-                    <td><small class="fw-bold">${r[0]}</small></td>
-                    <td><small>${r[2]}</small></td>
+                    <td><code>${r[0]}</code></td>
+                    <td>${r[2]}</td>
                     <td><b>${r[3]}</b></td>
-                    <td><span class="badge bg-secondary">${r[8]}</span></td>
+                    <td class="${sClass} fw-bold">${r[8]}</td>
                     <td>
-                        <button class="btn btn-sm btn-success" onclick="mudarStatus('${r[0]}','Aprovado')">Sim</button>
-                        <button class="btn btn-sm btn-danger" onclick="mudarStatus('${r[0]}','Recusado')">Não</button>
+                        <button class="btn btn-sm btn-success" onclick="mudarStatus('${r[0]}','Aprovado')">Aprovar</button>
+                        <button class="btn btn-sm btn-danger" onclick="mudarStatus('${r[0]}','Recusado')">Negar</button>
                     </td>
                 </tr>`;
             });
@@ -82,7 +84,7 @@
     }
 
     function mudarStatus(id, st) {
-        const obs = prompt("Motivo ou observação:");
+        const obs = prompt("Parecer da Diretoria de Gestão de Pessoas:");
         if(obs !== null) {
             fetch(GAS_URL, { method: "POST", body: JSON.stringify({ action: "atualizar", protocolo: id, novoStatus: st, obs: obs }) }).then(() => buscarDados());
         }
